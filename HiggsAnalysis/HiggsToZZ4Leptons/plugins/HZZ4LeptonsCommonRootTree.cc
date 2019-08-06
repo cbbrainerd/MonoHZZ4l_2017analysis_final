@@ -50,7 +50,7 @@ HZZ4LeptonsCommonRootTree::HZZ4LeptonsCommonRootTree(const edm::ParameterSet& ps
 
   theTree_ = new TTree("HZZ4LeptonsAnalysis", "HZZ4Leptons Analysis Tree");
 
-  //cout << "This is" << pset.getUntrackedParameter("fileName", std::string()) << endl;
+  //std::cout << "This is" << pset.getUntrackedParameter("fileName", std::string()) << std::endl;
 
   // Creating branches
   DefineBranches(theTree_);
@@ -95,7 +95,7 @@ HZZ4LeptonsCommonRootTree::~HZZ4LeptonsCommonRootTree() {
   theFile_->Write();
   theFile_->Close();
 
-  cout << "Number of events analysed for the ROOT tree= " << nevt << std::endl;
+  std::cout << "Number of events analysed for the ROOT tree= " << nevt << std::endl;
 
   }
 
@@ -168,14 +168,14 @@ void HZZ4LeptonsCommonRootTree::analyze(const edm::Event& iEvent, const edm::Eve
 //              }
 //              std::cout <<"}"<<std::endl;
 //              edm::ParameterSetID psid(itIdBranch->first);
-//              cout << "Psid= " << psid << endl;
+//              std::cout << "Psid= " << psid << std::endl;
              
 //              // to get access to the parameter set registry
 //              edm::pset::Registry* reg = edm::pset::Registry::instance();
 //              bool found=false;
 //              for (edm::pset::Registry::const_iterator it=reg->begin(); it!=reg->end();++it){
 //                if (it->first==psid) {
-//                  std::cout <<" parameters: "<< it->second << endl;
+//                  std::cout <<" parameters: "<< it->second << std::endl;
 //     //             printParameters(it->second,par_to_search,originalmH);
 //                  // const struct std::pair<const edm::ParameterSetID, edm::ParameterSet>
 //                  found=true;
@@ -193,7 +193,7 @@ void HZZ4LeptonsCommonRootTree::analyze(const edm::Event& iEvent, const edm::Eve
 
   // Incrementing counter of events
   nevt++;
-  cout << "Dumping the information of the event in a ROOT tree: " << nevt << std::endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "Dumping the information of the event in a ROOT tree: " << nevt << std::endl;
   
   //Initialize variables
   Initialize();
@@ -203,15 +203,15 @@ void HZZ4LeptonsCommonRootTree::analyze(const edm::Event& iEvent, const edm::Eve
   ievt=iEvent.id().event();
   ils=iEvent.luminosityBlock();
 
-  // cout << "Dumping the information of run=" << irun << "  event=" << ievt << "  lumisection=" << ils << std::endl;
-  cout << "Dumping_the_information_of_run:" << irun << ":" << ievt << ":" << ils << std::endl;
+  // std::cout << "Dumping the information of run=" << irun << "  event=" << ievt << "  lumisection=" << ils << std::endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "Dumping_the_information_of_run:" << irun << ":" << ievt << ":" << ils << std::endl;
 
   edm::Handle<LumiSummary> l;
   iEvent.getLuminosityBlock().getByLabel("lumiProducer", l); 
   // Check that there is something
   if (l.isValid()){
     Avginstlumi=l->avgInsDelLumi();
-    cout << "Instataneous luminosity= " << Avginstlumi << endl;
+    if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "Instataneous luminosity= " << Avginstlumi << std::endl;
   }
 
   // file PU block
@@ -226,7 +226,7 @@ void HZZ4LeptonsCommonRootTree::analyze(const edm::Event& iEvent, const edm::Eve
   
   // Get the MC Truth particles, H, ZZ and 4 leptons
   if ( fillMCTruth) {
-    cout << "Filling MCtruth variables" << endl;
+    if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "Filling MCtruth variables" << std::endl;
     fillgenparticles(iEvent,iSetup);
     fillmc(iEvent);
   }
@@ -237,30 +237,46 @@ void HZZ4LeptonsCommonRootTree::analyze(const edm::Event& iEvent, const edm::Eve
   PV = *recoPrimaryVertexCollection;
   
   RECO_NVTX=recoPrimaryVertexCollection->size();
-  cout << "Number of Vertices in the event= " << RECO_NVTX << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "Number of Vertices in the event= " << RECO_NVTX << std::endl;
 
   int index_vertex = 0;
   
   for (VertexCollection::const_iterator i=recoPrimaryVertexCollection->begin(); i!=recoPrimaryVertexCollection->end();i++) {
-    if(index_vertex>14) break;
-    RECO_VERTEX_x[index_vertex] = i->x();
-    RECO_VERTEX_y[index_vertex] = i->y();
-    RECO_VERTEX_z[index_vertex] = i->z();
-    RECO_VERTEX_ndof[index_vertex] = i->ndof();
-    RECO_VERTEX_chi2[index_vertex] = i->chi2();
-    RECO_VERTEX_ntracks[index_vertex] = i->tracksSize();
-    RECO_VERTEXPROB[index_vertex] = ChiSquaredProbability(i->chi2(),i->ndof());
-    RECO_VERTEX_isValid[index_vertex] = i->isValid();
-    cout << "Vertex made by " << i->tracksSize() << " tracks with chi2="<< i->chi2() << " and ndof=" << i->ndof() << " and prob=" << RECO_VERTEXPROB[index_vertex] << endl;
+    //if(index_vertex>14) break;
+    if(index_vertex==15) std::cout << "Warning: number of recoPrimaryVertexCollection exceeds previous max value," << irun << ":" << ils << ":" << ievt << std::endl;
+    if(index_vertex==1) break; // Only save one
+    RECO_VERTEX_x = i->x();
+    RECO_VERTEX_y = i->y();
+    RECO_VERTEX_z = i->z();
+    RECO_VERTEX_ndof = i->ndof();
+    RECO_VERTEX_chi2 = i->chi2();
+    RECO_VERTEX_ntracks = i->tracksSize();
+    RECO_VERTEXPROB = ChiSquaredProbability(i->chi2(),i->ndof());
+    RECO_VERTEX_isValid = i->isValid();
     
-    int indice=0;
-    for(std::vector<reco::TrackBaseRef>::const_iterator iter = i->tracks_begin();
-	iter != i->tracks_end(); iter++) {
-      cout << "pT of tracks building the vertex= " << (**iter).pt() << endl; 
-      if (indice <100) RECO_VERTEX_TRACK_PT[index_vertex][indice]= (**iter).pt();
-      indice++;
-    }
-   
+/*
+ *    RECO_VERTEX_x[index_vertex] = i->x();
+ *    RECO_VERTEX_y[index_vertex] = i->y();
+ *    RECO_VERTEX_z[index_vertex] = i->z();
+ *    RECO_VERTEX_ndof[index_vertex] = i->ndof();
+ *    RECO_VERTEX_chi2[index_vertex] = i->chi2();
+ *    RECO_VERTEX_ntracks[index_vertex] = i->tracksSize();
+ *    RECO_VERTEXPROB[index_vertex] = ChiSquaredProbability(i->chi2(),i->ndof());
+ *    RECO_VERTEX_isValid[index_vertex] = i->isValid();
+ *    if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "Vertex made by " << i->tracksSize() << " tracks with chi2="<< i->chi2() << " and ndof=" << i->ndof() << " and prob=" << RECO_VERTEXPROB[index_vertex] << std::endl;
+ *    
+ */
+/*
+ *    int indice=0;
+ *    for(std::vector<reco::TrackBaseRef>::const_iterator iter = i->tracks_begin();
+ *	iter != i->tracks_end(); iter++) {
+ *      if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "pT of tracks building the vertex= " << (**iter).pt() << std::endl; 
+ *      if (indice <100) RECO_VERTEX_TRACK_PT[indice] = (**iter).pt();
+ *      //if (indice <100) RECO_VERTEX_TRACK_PT[index_vertex][indice] = (**iter).pt();
+ *      indice++;
+ *    }
+ */
+
     index_vertex++;
   } // loop on vertices
   
@@ -268,22 +284,22 @@ void HZZ4LeptonsCommonRootTree::analyze(const edm::Event& iEvent, const edm::Eve
 
   // Fill RECO block in the rootple
   // PF Jets
-  cout << "fill jet test" << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "fill jet test" << std::endl;
   filljets(iEvent,iSetup);
-  cout << "fill jet test end" << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "fill jet test end" << std::endl;
 
 //  if (useAdditionalRECO==true) {
 //    fillAdditionalRECO(iEvent);
-//  cout << "RECOcollNameZ size " << RECOcollNameZ.size() << endl;
+//  std::cout << "RECOcollNameZ size " << RECOcollNameZ.size() << std::endl;
 //  }
 
 
   // Filling electron and muons vectors
-  cout <<"fill ele test" << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout <<"fill ele test" << std::endl;
   fillElectrons(iEvent,iSetup);
-  cout <<"fill Muon test" << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout <<"fill Muon test" << std::endl;
   fillMuons(iEvent,iSetup);
-  cout <<"fill photon test" << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout <<"fill photon test" << std::endl;
   fillPhotons(iEvent);
 
 
@@ -305,14 +321,14 @@ void HZZ4LeptonsCommonRootTree::analyze(const edm::Event& iEvent, const edm::Eve
   
   //Tracks
 
-  cout << "fill track test" << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "fill track test" << std::endl;
   fillTracks(iEvent); 
 
  //GENJets
   if (fillMCTruth) fillgenjets(iEvent);
 
     
-  cout << "GENMET test" << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "GENMET test" << std::endl;
 
   //GENMET
   if (fillMCTruth) {
@@ -326,17 +342,17 @@ void HZZ4LeptonsCommonRootTree::analyze(const edm::Event& iEvent, const edm::Eve
  
 
  
-  cout << "fill MET" << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "fill MET" << std::endl;
   //RECO MET
   fillMET(iEvent);
 
  
-  cout << "fill MET Filters" << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "fill MET Filters" << std::endl;
   //RECO MET
   fillMETFilters(iEvent);
 
 
-   cout << " beam spot met " << endl;
+   if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << " beam spot met " << std::endl;
   // Beam Spot
   edm::Handle<reco::BeamSpot> recoBeamSpotHandle;
   iEvent.getByToken(offlineBeamSpot_,recoBeamSpotHandle) ;
@@ -346,13 +362,13 @@ void HZZ4LeptonsCommonRootTree::analyze(const edm::Event& iEvent, const edm::Eve
   BeamSpot_Y=bs.position().y();
   BeamSpot_Z=bs.position().z();
   
-  cout << "BeamSpot:"
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "BeamSpot:"
        << "  bs_X=" << BeamSpot_X
        << "  bs_Y=" << BeamSpot_Y
        << "  bs_Z=" << BeamSpot_Z
-       << endl;
+       << std::endl;
 
-  cout << "Btag test " << endl;
+  if(HZZ4LeptonsCommonRootTreeH_DEBUG) std::cout << "Btag test " << std::endl;
   // btagging
   fillBTagging(iEvent);
 
@@ -363,11 +379,9 @@ void HZZ4LeptonsCommonRootTree::analyze(const edm::Event& iEvent, const edm::Eve
 }
 
 void HZZ4LeptonsCommonRootTree::beginJob() {
-  cout << "Filling a ROOT tree for offline selection" << endl;
+  std::cout << "Filling a ROOT tree for offline selection" << std::endl;
 }
 
 
 void HZZ4LeptonsCommonRootTree::endJob() {
 }
-
-
